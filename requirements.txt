@@ -1,0 +1,7 @@
+solc-select
+parsimonious
+virtualenv
+mythril
+echidna
+slither-analyzer
+crytic-compile

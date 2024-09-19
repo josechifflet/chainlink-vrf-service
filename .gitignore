@@ -1,0 +1,66 @@
+# directories
+cache
+coverage
+node_modules
+out
+
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+lcov.info
+yarn.lock
+
+# broadcasts
+!broadcast
+broadcast/*
+broadcast/*/31337/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Install logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore virtual environment folders
+.env/
+.venv/
+ENV/
+env/
+venv/
+env.bak/
+venv.bak/
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp.*
+
+# Environments
+.env
+.env.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Docker
+*.log
+*.pid
+*.pid.lock
+*.swp
+
+# MacOS
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Pyre type checker
+.pyre/
