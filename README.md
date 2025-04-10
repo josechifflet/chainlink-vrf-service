@@ -1,136 +1,172 @@
-# Chainlink VRF Service
+# 🎲 Chainlink VRF Service
 
-## Overview
+A version-agnostic intermediary smart contract for seamless integration of Chainlink's Verifiable Random Function (VRF) into your decentralized applications. This solution decouples your immutable contracts from direct VRF dependencies, ensuring they remain functional through VRF version upgrades.
 
-The `VRFHandler` smart contract serves as an intermediary for Chainlink's VRF, providing a flexible and version-agnostic interface for requesting random numbers. By decoupling your main immutable contracts from direct Chainlink VRF dependencies, you ensure they remain functional even if Chainlink upgrades or changes their VRF services (e.g., from VRF 2.0 to VRF 2.5).
+## 📋 System Overview
 
-**Problem Addressed**: If your immutable smart contract is tightly coupled with a specific VRF version, any forced migration by Chainlink could render it unusable.
+The Chainlink VRF Service provides a robust and future-proof randomness solution through three primary components:
 
-The `VRFHandler` mitigates this risk by allowing you to update or replace the handler without altering your main contract's logic.
+1. **🔄 VRF Handler** - Acts as the intermediary between your contracts and Chainlink VRF
+2. **📝 Interface Layer** - Well-defined interfaces for consistent communication
+3. **🔐 Access Control** - Security-focused permissions for randomness requests
 
-## Features
+This architecture ensures your contracts remain operational even when Chainlink upgrades their VRF service (e.g., from VRF 2.0 to VRF 2.5), as you can update only the handler contract.
 
-- **Version-Agnostic Integration**: Protects your contracts from VRF version changes.
-- **Decoupled Architecture**: Separates VRF logic from your main contracts.
-- **Access Control**: Only authorized contracts can request random numbers.
-- **Configurable Parameters**: Adjust VRF request settings as needed.
-- **Native Payment Support**: Option to use native gas for VRF requests.
+## ✨ Features
 
-## Prerequisites
+- **🛡️ Version-Agnostic Design** - Shields your contracts from VRF implementation changes
+- **🔄 Separation of Concerns** - Isolates VRF integration logic from your business logic
+- **🔒 Access Control** - Only authorized contracts can request random numbers
+- **⚙️ Configurable Parameters** - Adjust VRF settings based on your needs
+- **💰 Native Payment Support** - Option to use native gas for VRF requests
+- **🔌 Custom Callbacks** - Support for specialized handling of random numbers
+- **📊 Request Tracking** - Monitor active and fulfilled randomness requests
+- **⏱️ Gas Optimization** - Carefully structured for minimal gas consumption
 
-- **Solidity**: Version `0.8.26`
-- **Chainlink Contracts**: Requires `@chainlink/contracts`
+## 🏗️ Architecture
 
-## Installation
+The system follows a clean, modular design pattern:
 
-1. **Clone the Repository**
+- **📌 VRFHandler Contract** - Core contract implementing the Chainlink VRF consumer functionality
+- **📝 IVRFHandler Interface** - Defines the external API for requesting random numbers
+- **📝 IVRFHandlerReceiver Interface** - Standard for contracts consuming random numbers
 
-   ```bash
-   git clone https://github.com/josechifflet/chainlink-vrf-service.git
-   cd chainlink-vrf-service
-   ```
+This design provides:
 
-2. **Install Dependencies**
+- **🔄 Upgradeability** - Replace the handler without changing consumer contracts
+- **🧩 Modularity** - Clear separation between randomness generation and consumption
+- **🔗 Standardization** - Consistent interfaces for all components
 
-   ```bash
-   make install
-   ```
+## 📚 Technical Details
 
-Will install the dependencies and create a virtual environment.
+### 🔄 Request Flow
 
-## Usage
+1. Consumer contracts call `requestRandomWords()` on VRFHandler
+2. VRFHandler relays the request to Chainlink VRF
+3. When fulfilled, VRFHandler receives random words from Chainlink
+4. Random words are delivered to the original requester via callback
 
-### Deployment
+### 🔐 Security Considerations
 
-Deploy the `VRFHandler` contract with the following parameters:
+- **🛡️ Access Control** - Only whitelisted contracts can request randomness
+- **🧪 Input Validation** - All parameters strictly validated
+- **⚠️ Error Handling** - Custom errors for clear failure modes
+- **🔄 Check-Effects-Interactions Pattern** - Prevents reentrancy vulnerabilities
+- **📜 Event Logging** - Comprehensive event emissions for off-chain monitoring
 
-```solidity
-constructor(
-  address _coordinator,
-  bytes32 _keyHash,
-  uint256 _subscriptionId,
-  uint16 _requestConfirmations,
-  uint32 _callbackGasLimit,
-  bool _nativePaymentEnabled
-)
+## 🚀 Getting Started
+
+### 📋 Prerequisites
+
+- **Solidity**: Version `0.8.29`
+- **Chainlink Contracts**: `@chainlink/contracts`
+
+### 📥 Installation
+
+```bash
+git clone https://github.com/josechifflet/chainlink-vrf-service.git
+cd chainlink-vrf-service
+make install
 ```
 
-- `_coordinator`: Chainlink VRF Coordinator address.
-- `_keyHash`: Key hash for your VRF subscription.
-- `_subscriptionId`: Your VRF subscription ID.
-- `_requestConfirmations`: Number of confirmations required.
-- `_callbackGasLimit`: Gas limit for the callback.
-- `_nativePaymentEnabled`: Use native gas for requests if `true`.
+### 🔧 Deployment
 
-### Integrate with Your Contract
+1. **Deploy the VRFHandler contract**:
 
-1. **Implement the Receiver Interface**
+```solidity
+VRFHandler handler = new VRFHandler(
+  address coordinator,
+  bytes32 keyHash,
+  uint256 subscriptionId,
+  uint16 requestConfirmations,
+  uint32 callbackGasLimit,
+  bool nativePaymentEnabled
+);
+```
 
-   Your contract should implement the `IVRFHandlerReceiver` interface:
+2. **Whitelist your consumer contracts**:
 
-   ```solidity
-   interface IVRFHandlerReceiver {
-     function fulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) external;
-   }
-   ```
+```solidity
+handler.addAllowedRequester(address consumerContract);
+```
 
-2. **Request Random Numbers**
+### 🧩 Integration Steps
 
-   As an authorized requester, call:
+1. **Implement the IVRFHandlerReceiver interface in your contract**:
 
-   ```solidity
-   function requestRandomWords(uint32 randomWordsAmount) external returns (uint256 requestId);
-   ```
+```solidity
+contract MyContract is IVRFHandlerReceiver {
+  IVRFHandler public vrfHandler;
+  
+  constructor(address _vrfHandler) {
+    vrfHandler = IVRFHandler(_vrfHandler);
+  }
+  
+  function requestRandomness(uint32 numWords) external {
+    vrfHandler.requestRandomWords(numWords);
+  }
+  
+  function fulfillRandomWords(
+    uint256 requestId, 
+    uint256[] calldata randomWords
+  ) external override {
+    // Use your random numbers here
+  }
+}
+```
 
-   - `randomWordsAmount`: Number of random numbers needed.
+2. **For custom callbacks, use the selector variant**:
 
-3. **Handle the Callback**
+```solidity
+function requestSpecialRandomness(uint32 numWords) external {
+  vrfHandler.requestRandomWords(
+    numWords,
+    this.myCustomCallback.selector
+  );
+}
 
-   Implement the `fulfillRandomWords` function to receive the random numbers:
+function myCustomCallback(
+  uint256 requestId, 
+  uint256[] calldata randomWords
+) external {
+  // Custom handling logic
+}
+```
 
-   ```solidity
-   function fulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) external override {
-       // Your logic using _randomWords
-   }
-   ```
+## 🔄 Upgrading the Handler
 
-### Updating the VRF Handler
+When Chainlink updates their VRF implementation:
 
-To adapt to VRF service changes, deploy a new `VRFHandler` with updated integrations and update the handler address in your main contract (e.g., via an `onlyOwner` function). This ensures continuity without modifying your main contract's immutable logic.
+1. Deploy a new VRFHandler contract with updated Chainlink integrations
+2. Update your consumer contracts to reference the new handler
 
-## Owner Functions
+Since your consumer contracts only interact through the interfaces, no logic changes are needed.
 
-- **Manage Requesters**:
+## 🧪 Testing
 
-  ```solidity
-  function addAllowedRequester(address _requester) external onlyOwner;
-  function removeAllowedRequester(address _requester) external onlyOwner;
-  ```
+The repository includes comprehensive tests:
 
-- **Configure VRF Settings**:
+- **🔬 Unit Tests** - For individual contract functions
+- **🔄 Integration Tests** - Verifying complete request and fulfillment flow
+- **⚙️ Configuration Tests** - Validating proper parameter adjustments
 
-  ```solidity
-  function setRequestConfirmations(uint16 _requestConfirmations) external onlyOwner;
-  function setCallbackGasLimit(uint32 _callbackGasLimit) external onlyOwner;
-  ```
+Run tests with:
 
-## Events
+```bash
+make test
+```
 
-- `AllowedRequesterAdded(address requester)`
-- `AllowedRequesterRemoved(address requester)`
-- `RequestConfirmationsSet(uint16 requestConfirmations)`
-- `CallbackGasLimitSet(uint32 callbackGasLimit)`
+## 📖 API Reference
 
-## Security Considerations
+### VRFHandler
 
-- **Access Control**: Only add trusted contracts as allowed requesters.
-- **Callback Security**: Ensure `fulfillRandomWords` handles inputs securely.
-- **Upgradeable Handler Reference**: Implement a method to update the `VRFHandler` address in your main contract to adapt to future changes.
+- **requestRandomWords(uint32 randomWordsAmount)** - Request random words using default callback
+- **requestRandomWords(uint32 randomWordsAmount, bytes4 selector)** - Request with custom callback
+- **addAllowedRequester(address _requester)** - Add authorized requester (owner only)
+- **removeAllowedRequester(address _requester)** - Remove authorization (owner only)
+- **setRequestConfirmations(uint16 _requestConfirmations)** - Configure confirmations (owner only)
+- **setCallbackGasLimit(uint32 _callbackGasLimit)** - Set callback gas limit (owner only)
 
-## Acknowledgments
-
-This project was developed using the [foundry-template](https://github.com/PaulRBerg/foundry-template.git) by [Paul Razvan Berg](https://github.com/PaulRBerg).
-
-## License
+## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
