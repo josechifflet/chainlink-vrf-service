@@ -88,6 +88,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   /// @dev Emitted when a random words request is fulfilled
   event RandomWordsFulfilled(uint256 indexed requestId, address indexed requester, uint256[] randomWords);
 
+  /// @dev Emitted when the native payment enabled is set
+  event NativePaymentEnabledSet(bool nativePaymentEnabled);
+
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Constructor
   └─────────────────────────────────────────────────────────────────────────────────────*/
@@ -251,6 +254,12 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   │ Admin functions
   └─────────────────────────────────────────────────────────────────────────────────────*/
 
+  /// @notice Get the VRF configuration
+  /// @return vrfConfig_ The VRF configuration
+  function getVrfConfig() external view returns (VRFConfig memory vrfConfig_) {
+    vrfConfig_ = vrfConfig;
+  }
+
   /// @notice Add an address to the allowed requesters
   /// @param _requester The address to authorize for random number requests
   function addAllowedRequester(address _requester) external onlyOwner {
@@ -280,6 +289,13 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     if (_callbackGasLimit == 0) revert InvalidParameter();
     vrfConfig.callbackGasLimit = _callbackGasLimit;
     emit CallbackGasLimitSet(_callbackGasLimit);
+  }
+
+  /// @notice Set the native payment enabled
+  /// @param _nativePaymentEnabled If true, the contract will use native gas for VRF requests
+  function setNativePaymentEnabled(bool _nativePaymentEnabled) external onlyOwner {
+    vrfConfig.nativePaymentEnabled = _nativePaymentEnabled;
+    emit NativePaymentEnabledSet(_nativePaymentEnabled);
   }
 
   /// @notice Makes a call to `target`, with `data`.
