@@ -1,5 +1,43 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/config
 
+[profile.dev]
+solc = "0.8.29"
+via_ir = false
+optimizer = false
+optimizer_runs = 200
+sparse_mode = true
+auto_detect_solc = false
+auto_detect_remappings = false
+
+[profile.production]
+solc = "0.8.29"
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+
+[profile.test]
+solc = "0.8.29"
+via_ir = false
+optimizer = false
+optimizer_runs = 200
+sparse_mode = true
+fuzz = { runs = 100 }
+invariant = { runs = 100 }
+auto_detect_solc = false
+
+[profile.gas]
+solc = "0.8.29"
+via_ir = true
+optimizer = true
+optimizer_runs = 10_000
+gas_reports = ["*"]
+
+[profile.size]
+solc = "0.8.29"
+via_ir = true
+optimizer = true
+optimizer_runs = 1
+
 [profile.default]
 solc = "0.8.29"
 auto_detect_solc = false
@@ -25,8 +63,14 @@ via_ir = true
 yul = true
 
 [profile.ci]
+solc = "0.8.29"
+via_ir = false
+optimizer = true
+optimizer_runs = 200
+auto_detect_solc = false
 fuzz = { runs = 10_000 }
 verbosity = 4
+sparse_mode = true
 
 [fmt]
 bracket_spacing = true

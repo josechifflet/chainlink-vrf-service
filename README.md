@@ -69,6 +69,51 @@ cd chainlink-vrf-service
 make install
 ```
 
+### ⚡ Build Optimization
+
+This project includes optimized build profiles for different development scenarios:
+
+#### 🚀 Quick Development Commands
+```bash
+# Fast development builds (5-20 seconds)
+make build-dev        # Development build (via_ir=false, optimizer=false)
+make build-fast       # Fastest build with sparse mode  
+make test-fast        # Quick testing with optimized profile
+make setup            # Fast project setup
+```
+
+#### 🎯 Specialized Builds
+```bash
+# Production deployment
+make build-prod       # Full optimization (via_ir=true) for mainnet
+make setup-prod       # Production setup with full optimization
+
+# Performance focused
+make build-gas        # Gas optimization (10k optimizer runs)
+make build-size       # Size optimization (minimal runs)
+make build-test       # Testing optimized (sparse mode, reduced fuzz runs)
+```
+
+#### 🔧 Development Utilities
+```bash
+# Performance analysis
+make benchmark-build  # Compare build times across profiles
+make cache-clean      # Clean build cache
+make foundry-check    # Verify Foundry version compatibility
+
+# Targeted builds
+make build-contract CONTRACT=src/VRFHandler.sol
+make test-specific CONTRACT=VRFHandlerTest
+make test-function FUNCTION=testVRFRequest
+```
+
+#### 📊 Expected Performance
+- **Development builds**: 5-20 seconds (vs 5-15 minutes previously)
+- **Production builds**: 5-15 minutes with full optimization
+- **Testing**: Significantly faster with sparse mode and reduced fuzz runs
+
+Run `make help` to see all available build optimization commands and options.
+
 ### 🔧 Deployment
 
 This project uses Foundry for deployment. The process is simplified using the provided deployment scripts.
