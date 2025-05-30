@@ -91,6 +91,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   /// @dev Emitted when the native payment enabled is set
   event NativePaymentEnabledSet(bool nativePaymentEnabled);
 
+  /// @dev Emitted when the VRF configuration is set
+  event VrfConfigSet(VRFConfig vrfConfig);
+
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Constructor
   └─────────────────────────────────────────────────────────────────────────────────────*/
@@ -258,6 +261,33 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   /// @return vrfConfig_ The VRF configuration
   function getVrfConfig() external view returns (VRFConfig memory vrfConfig_) {
     vrfConfig_ = vrfConfig;
+  }
+
+  /// @notice Set the VRF configuration
+  /// @param _keyHash The key hash for VRF requests
+  /// @param _subscriptionId The Chainlink VRF subscription ID
+  /// @param _requestConfirmations The number of confirmations to wait before fulfilling a request
+  /// @param _callbackGasLimit The gas limit for the callback function
+  /// @param _nativePaymentEnabled If true, the contract will use native gas for VRF requests
+  function setVrfConfig(
+    bytes32 _keyHash,
+    uint256 _subscriptionId,
+    uint16 _requestConfirmations,
+    uint32 _callbackGasLimit,
+    bool _nativePaymentEnabled
+  )
+    external
+    onlyOwner
+  {
+    vrfConfig = VRFConfig({
+      keyHash: _keyHash,
+      subscriptionId: _subscriptionId,
+      requestConfirmations: _requestConfirmations,
+      callbackGasLimit: _callbackGasLimit,
+      nativePaymentEnabled: _nativePaymentEnabled
+    });
+    // Emit the event
+    emit VrfConfigSet(vrfConfig);
   }
 
   /// @notice Add an address to the allowed requesters

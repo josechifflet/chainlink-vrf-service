@@ -91,20 +91,20 @@ Update the `.env` file with:
 Use the `deploy.sh` script to deploy the contract to your chosen network:
 
 ```bash
-# Format: ./script/deploy.sh <rpc-url> <keystore-account> <sender-address> <verification-api-key> <chain-id> <subscription-id>
+# Format: ./script/deploy.sh <rpc-url> <keystore-account> <sender-address> <verification-api-key> <chain-id>
 
 # Examples:
 # Ethereum Sepolia
-./script/deploy.sh $RPC_URL_SEPOLIA keystore/deploy.json 0xYourAddress $ETHERSCAN_API_KEY 11155111 1
+./script/deploy.sh $RPC_URL_SEPOLIA keystore/deploy.json 0xYourAddress $ETHERSCAN_API_KEY 11155111
 
 # Polygon Mainnet
-./script/deploy.sh $RPC_URL_POLYGON keystore/deploy.json 0xYourAddress $POLYGONSCAN_API_KEY 137 1
+./script/deploy.sh $RPC_URL_POLYGON keystore/deploy.json 0xYourAddress $POLYGONSCAN_API_KEY 137
 
 # Base Sepolia
-./script/deploy.sh $RPC_URL_BASE_SEPOLIA keystore/deploy.json 0xYourAddress $BASESCAN_API_KEY 84532 1
+./script/deploy.sh $RPC_URL_BASE_SEPOLIA keystore/deploy.json 0xYourAddress $BASESCAN_API_KEY 84532
 
 # Arbitrum Mainnet
-./script/deploy.sh $RPC_URL_ARBITRUM keystore/deploy.json 0xYourAddress $ARBISCAN_API_KEY 42161 1
+./script/deploy.sh $RPC_URL_ARBITRUM keystore/deploy.json 0xYourAddress $ARBISCAN_API_KEY 42161
 ```
 
 The `deploy.sh` script will:
