@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 import { IVRFHandler } from "src/IVRFHandler.sol";
 import { IVRFHandlerReceiver } from "src/IVRFHandlerReceiver.sol";
@@ -66,6 +66,16 @@ contract MockReceiver is IVRFHandlerReceiver {
   function requestRandomWordsWithCustomCallback() external returns (uint256) {
     bytes4 selector = this.customCallback.selector;
     return vrfHandler.requestRandomWords(defaultNumWords, selector);
+  }
+
+  /// @notice Request random words without callback
+  function requestRandomWordsNoCallback() external returns (uint256) {
+    return vrfHandler.requestRandomWords(defaultNumWords);
+  }
+
+  /// @notice Request random words without callback with specific amount
+  function requestRandomWordsNoCallback(uint32 numWords) external returns (uint256) {
+    return vrfHandler.requestRandomWords(numWords);
   }
 
   /// @notice Reset the mock state

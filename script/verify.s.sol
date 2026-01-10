@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 import { BaseScript } from "./base.s.sol";
 import { ChainConfig } from "./utils/chains.sol";

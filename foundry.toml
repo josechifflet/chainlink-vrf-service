@@ -1,49 +1,15 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/config
+# Foundry version: 1.2.0
 
-[profile.dev]
-solc = "0.8.29"
-via_ir = false
-optimizer = false
-optimizer_runs = 200
-sparse_mode = true
-auto_detect_solc = false
-auto_detect_remappings = false
-
-[profile.production]
-solc = "0.8.29"
-via_ir = true
-optimizer = true
-optimizer_runs = 200
-
-[profile.test]
-solc = "0.8.29"
-via_ir = false
-optimizer = false
-optimizer_runs = 200
-sparse_mode = true
-fuzz = { runs = 100 }
-invariant = { runs = 100 }
-auto_detect_solc = false
-
-[profile.gas]
-solc = "0.8.29"
-via_ir = true
-optimizer = true
-optimizer_runs = 10_000
-gas_reports = ["*"]
-
-[profile.size]
-solc = "0.8.29"
-via_ir = true
-optimizer = true
-optimizer_runs = 1
-
+#───────────────────────────────────────────────────────────────────────────────
+# Default Profile - Used for general development and testing
+#───────────────────────────────────────────────────────────────────────────────
 [profile.default]
-solc = "0.8.29"
+solc = "0.8.33"
 auto_detect_solc = false
 auto_detect_remappings = false
-bytecode_hash = "none"
-cbor_metadata = false
+bytecode_hash = "ipfs"
+cbor_metadata = true
 sparse_mode = false
 evm_version = "cancun"
 fuzz = { runs = 1_000 }
@@ -56,14 +22,75 @@ script = "script"
 src = "src"
 test = "test"
 ignored_warnings_from = ["node_modules", "lib", "test"]
-gas_limit = "18446744073709551615" # u64::MAX
+gas_limit = "18446744073709551615"
 via_ir = true
 
 [profile.default.optimizer_details]
 yul = true
 
+#───────────────────────────────────────────────────────────────────────────────
+# Deploy Profile - Production deployments
+#───────────────────────────────────────────────────────────────────────────────
+[profile.deploy]
+solc = "0.8.33"
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "ipfs"
+cbor_metadata = true
+evm_version = "cancun"
+sparse_mode = false
+auto_detect_solc = false
+auto_detect_remappings = false
+build_info = true
+extra_output = ["storageLayout"]
+
+[profile.deploy.optimizer_details]
+yul = true
+constantOptimizer = true
+
+#───────────────────────────────────────────────────────────────────────────────
+# Dev Profile - Fast iteration (no optimization)
+#───────────────────────────────────────────────────────────────────────────────
+[profile.dev]
+solc = "0.8.33"
+via_ir = false
+optimizer = false
+optimizer_runs = 200
+sparse_mode = true
+auto_detect_solc = false
+auto_detect_remappings = false
+
+#───────────────────────────────────────────────────────────────────────────────
+# Dev Scripts Profile - For running scripts locally without optimization
+#───────────────────────────────────────────────────────────────────────────────
+[profile.dev-scripts]
+solc = "0.8.33"
+via_ir = false
+optimizer = false
+optimizer_runs = 200
+sparse_mode = true
+auto_detect_solc = false
+auto_detect_remappings = false
+
+#───────────────────────────────────────────────────────────────────────────────
+# Test Profile - Unit and integration tests
+#───────────────────────────────────────────────────────────────────────────────
+[profile.test]
+solc = "0.8.33"
+via_ir = false
+optimizer = false
+optimizer_runs = 200
+sparse_mode = true
+fuzz = { runs = 100 }
+invariant = { runs = 100 }
+auto_detect_solc = false
+
+#───────────────────────────────────────────────────────────────────────────────
+# CI Profile - Continuous integration (extensive fuzzing)
+#───────────────────────────────────────────────────────────────────────────────
 [profile.ci]
-solc = "0.8.29"
+solc = "0.8.33"
 via_ir = false
 optimizer = true
 optimizer_runs = 200
@@ -72,6 +99,28 @@ fuzz = { runs = 10_000 }
 verbosity = 4
 sparse_mode = true
 
+#───────────────────────────────────────────────────────────────────────────────
+# Gas Profile - Gas optimization analysis
+#───────────────────────────────────────────────────────────────────────────────
+[profile.gas]
+solc = "0.8.33"
+via_ir = true
+optimizer = true
+optimizer_runs = 10_000
+gas_reports = ["*"]
+
+#───────────────────────────────────────────────────────────────────────────────
+# Size Profile - Contract size optimization (minimize bytecode)
+#───────────────────────────────────────────────────────────────────────────────
+[profile.size]
+solc = "0.8.33"
+via_ir = true
+optimizer = true
+optimizer_runs = 1
+
+#───────────────────────────────────────────────────────────────────────────────
+# Formatter Configuration
+#───────────────────────────────────────────────────────────────────────────────
 [fmt]
 bracket_spacing = true
 int_types = "long"
@@ -83,20 +132,35 @@ quote_style = "double"
 tab_width = 2
 wrap_comments = true
 sort_imports = true
-code-complexity = 20
 
+#───────────────────────────────────────────────────────────────────────────────
+# RPC Endpoints
+#───────────────────────────────────────────────────────────────────────────────
+[rpc_endpoints]
+mainnet = "${RPC_URL_MAINNET}"
+sepolia = "${RPC_URL_SEPOLIA}"
+arbitrum = "${RPC_URL_ARBITRUM}"
+arbitrum-sepolia = "${RPC_URL_ARBITRUM_SEPOLIA}"
+base = "${RPC_URL_BASE}"
+base-sepolia = "${RPC_URL_BASE_SEPOLIA}"
+polygon = "${RPC_URL_POLYGON}"
+polygon-amoy = "${RPC_URL_POLYGON_AMOY}"
+
+#───────────────────────────────────────────────────────────────────────────────
+# Etherscan Verification
+#───────────────────────────────────────────────────────────────────────────────
 [etherscan]
-mainnet = { key = "${ETHERSCAN_API_KEY}", chain = 1, url = "https://api.etherscan.io/api" }
-sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 1115542, url = "https://api-sepolia.etherscan.io/api" }
+mainnet = { key = "${ETHERSCAN_API_KEY}", chain = 1 }
+sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 11155111 }
+arbitrum = { key = "${ARBISCAN_API_KEY}", chain = 42161 }
+arbitrum-sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421614 }
+base = { key = "${BASESCAN_API_KEY}", chain = 8453 }
+base-sepolia = { key = "${BASESCAN_API_KEY}", chain = 84532 }
+polygon = { key = "${POLYGONSCAN_API_KEY}", chain = 137 }
+polygon-amoy = { key = "${POLYGONSCAN_API_KEY}", chain = 80002 }
 
-arbitrum = { key = "${ARBISCAN_API_KEY}", chain = 42161, url = "https://api.arbiscan.io/api" }
-arbitrum-sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421613, url = "https://api-sepolia.arbiscan.io/api" }
-
-base = { key = "${BASESCAN_API_KEY}", chain = 8453, url = "https://api.basescan.org/api" }
-base-sepolia = { key = "${BASESCAN_API_KEY}", chain = 84532, url = "https://api-sepolia.basescan.org/api" }
-
-polygon = { key = "${POLYGONSCAN_API_KEY}", chain = 137, url = "https://api.polygonscan.com/api" }
-polygon-amoy = { key = "${POLYGONSCAN_API_KEY}", chain = 80002, url = "https://api-amoy.polygonscan.com/api" }
-
+#───────────────────────────────────────────────────────────────────────────────
+# Fuzz Testing Defaults
+#───────────────────────────────────────────────────────────────────────────────
 [fuzz]
 runs = 1000

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 /// @title Mock VRF Consumer Base V2 Plus
 /// @notice A minimal mock of Chainlink's VRFConsumerBaseV2Plus contract

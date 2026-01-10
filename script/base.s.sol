@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 import { Script } from "forge-std/Script.sol";
 // solhint-disable-next-line no-console

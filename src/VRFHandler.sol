@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 // VRF Handler Interface
 import { IVRFHandler } from "./IVRFHandler.sol";
-import { IVRFHandlerReceiver } from "./IVRFHandlerReceiver.sol";
 // Chainlink
 import { VRFConsumerBaseV2Plus } from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import { VRFV2PlusClient } from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
@@ -135,8 +134,8 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   │ External functions
   └─────────────────────────────────────────────────────────────────────────────────────*/
 
-  /// @notice Request random words with the default callback function (`fulfillRandomWords`)
-  /// @dev Requests random numbers from Chainlink VRF and uses the standard callback
+  /// @notice Request random words without a callback
+  /// @dev Random words are emitted via RandomWordsFulfilled event only
   /// @param randomWordsAmount The number of random words to request
   /// @return requestId The unique identifier for this request
   function requestRandomWords(uint32 randomWordsAmount) external returns (uint256 requestId) {
@@ -152,8 +151,8 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     // Create the VRF request
     requestId = _createVRFRequest(randomWordsAmount);
 
-    // Store the default selector of the callback function
-    vrfRequestIdToSelector[requestId] = IVRFHandlerReceiver.fulfillRandomWords.selector;
+    // No selector stored - bytes4(0) indicates no callback
+    // vrfRequestIdToSelector[requestId] remains bytes4(0)
 
     // Store the requester address for this request ID
     vrfRequestIdToRequester[requestId] = msg.sender;
@@ -162,8 +161,8 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     emit RandomWordsRequested(requestId, msg.sender, randomWordsAmount);
   }
 
-  /// @notice Request random words with a custom selector as the callback function
-  /// @dev Allows specifying a custom function selector for the callback
+  /// @notice Request random words with a callback
+  /// @dev Callback is made to the requester with the specified selector
   /// @param randomWordsAmount The number of random words to request
   /// @param selector The selector of the callback function
   /// @return requestId The unique identifier for this request
@@ -223,6 +222,11 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
 
     // Get the requester address
     address requester = vrfRequestIdToRequester[_requestId];
+
+    // Get the callback selector
+    bytes4 selector = vrfRequestIdToSelector[_requestId];
+
+    // Verify the requester is valid
     if (requester == address(0)) revert Unauthorized();
 
     // Update state before external calls
@@ -233,6 +237,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     // Clean up the request data
     delete vrfRequestIdToRequester[_requestId];
 
+    // Clean up the selector
+    delete vrfRequestIdToSelector[_requestId];
+
     // Decrement active requests counter
     unchecked {
       activeRequests--;
@@ -241,16 +248,15 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     // Emit the fulfillment event
     emit RandomWordsFulfilled(_requestId, requester, _randomWords);
 
-    // Make external call after state changes
+    // Only make external call if a callback selector was specified
+    // Requests made via requestRandomWordsNoCallback have selector = bytes4(0)
+    if (selector != bytes4(0)) {
+      // Prepare the callback data with the selector and parameters
+      bytes memory callData = abi.encodeWithSelector(selector, _requestId, _randomWords);
 
-    // Prepare the callback data with the correct selector and parameters
-    bytes memory callData = abi.encodeWithSelector(vrfRequestIdToSelector[_requestId], _requestId, _randomWords);
-
-    // Clean up the selector after use
-    delete vrfRequestIdToSelector[_requestId];
-
-    // Use `_callContract` to make a safer external call with proper error handling
-    _callContract(requester, callData);
+      // Use `_callContract` to make a safer external call with proper error handling
+      _callContract(requester, callData);
+    }
   }
 
   /*─────────────────────────────────────────────────────────────────────────────────────

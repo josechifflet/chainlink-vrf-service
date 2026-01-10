@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 import { Test } from "forge-std/Test.sol";
 import { IVRFHandler } from "src/IVRFHandler.sol";
@@ -35,6 +35,8 @@ contract VRFHandlerTest is Test {
   event CallbackGasLimitSet(uint32 callbackGasLimit);
   event RandomWordsRequested(uint256 indexed requestId, address indexed requester, uint32 randomWordsAmount);
   event RandomWordsFulfilled(uint256 indexed requestId, address indexed requester, uint256[] randomWords);
+  event NativePaymentEnabledSet(bool nativePaymentEnabled);
+  event VrfConfigSet(VRFHandler.VRFConfig vrfConfig);
 
   /// @notice Setup method executed before each test
   function setUp() public virtual {

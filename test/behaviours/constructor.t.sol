@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 import { VRFHandler } from "src/VRFHandler.sol";
 import { VRFHandlerTest } from "test/VRFHandler.t.sol";

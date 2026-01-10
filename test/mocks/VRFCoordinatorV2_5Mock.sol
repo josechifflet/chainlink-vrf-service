@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.29;
+pragma solidity 0.8.33;
 
 /// @title VRF Coordinator V2.5 Mock
 /// @notice A mock implementation of the Chainlink VRF Coordinator V2.5 for testing
