@@ -21,6 +21,20 @@ contract VRFHandlerMock is IVRFHandler {
     return _requestId;
   }
 
+  function requestRandomWordsWithCommitment(
+    uint32 randomWordsAmount,
+    bytes32 manifestHash,
+    uint256 rangeSize
+  )
+    external
+    override
+    returns (uint256 requestId)
+  {
+    _requestId++;
+    requestIdToRequester[_requestId] = msg.sender;
+    return _requestId;
+  }
+
   function mock_fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {
     address requester = requestIdToRequester[requestId];
     require(requester != address(0), "VRFHandlerMock: Unknown request ID");

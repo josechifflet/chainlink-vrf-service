@@ -27,6 +27,15 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     bool nativePaymentEnabled;
   }
 
+  /// @dev Commitment data for verifiable randomness requests
+  struct Commitment {
+    bytes32 manifestHash;
+    uint256 rangeSize;
+    uint32 count;
+    uint256 committedAt;
+    address requester;
+  }
+
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ State variables
   └─────────────────────────────────────────────────────────────────────────────────────*/
@@ -48,6 +57,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
 
   /// @dev Counter of outstanding requests
   uint256 public activeRequests;
+
+  /// @dev VRF Request ID => Commitment data
+  mapping(uint256 requestId => Commitment commitment) public commitments;
 
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Errors
@@ -92,6 +104,14 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
 
   /// @dev Emitted when the VRF configuration is set
   event VrfConfigSet(VRFConfig vrfConfig);
+
+  /// @dev Emitted when a commitment is stored
+  event CommitmentStored(uint256 indexed requestId, bytes32 indexed manifestHash, uint256 rangeSize, uint32 count);
+
+  /// @dev Emitted when random words are fulfilled with commitment
+  event RandomWordsFulfilledWithCommitment(
+    uint256 indexed requestId, bytes32 indexed manifestHash, uint256[] randomWords, uint256[] results
+  );
 
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Constructor
@@ -190,6 +210,51 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     emit RandomWordsRequested(requestId, msg.sender, randomWordsAmount);
   }
 
+  /// @notice Request random words with a commitment for verifiable selection
+  /// @dev Stores commitment data for later verification when random words are fulfilled
+  /// @param randomWordsAmount The number of random words to request
+  /// @param manifestHash The hash identifying the data set (e.g., IPFS CID)
+  /// @param rangeSize The size of the range for result computation (results are 1 to rangeSize)
+  /// @return requestId The unique identifier for this request
+  function requestRandomWordsWithCommitment(
+    uint32 randomWordsAmount,
+    bytes32 manifestHash,
+    uint256 rangeSize
+  )
+    external
+    returns (uint256 requestId)
+  {
+    // Ensure the caller is authorized
+    if (!allowedRequesters[msg.sender]) revert Unauthorized();
+    if (randomWordsAmount == 0) revert InvalidParameter();
+    if (manifestHash == bytes32(0)) revert InvalidParameter();
+    if (rangeSize == 0) revert InvalidParameter();
+
+    // Increment the counter of active requests
+    unchecked {
+      activeRequests++;
+    }
+
+    // Create the VRF request
+    requestId = _createVRFRequest(randomWordsAmount);
+
+    // Store the requester address for this request ID
+    vrfRequestIdToRequester[requestId] = msg.sender;
+
+    // Store the commitment data
+    commitments[requestId] = Commitment({
+      manifestHash: manifestHash,
+      rangeSize: rangeSize,
+      count: randomWordsAmount,
+      committedAt: block.timestamp,
+      requester: msg.sender
+    });
+
+    // Emit the events
+    emit RandomWordsRequested(requestId, msg.sender, randomWordsAmount);
+    emit CommitmentStored(requestId, manifestHash, rangeSize, randomWordsAmount);
+  }
+
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Internal functions
   └─────────────────────────────────────────────────────────────────────────────────────*/
@@ -226,6 +291,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     // Get the callback selector
     bytes4 selector = vrfRequestIdToSelector[_requestId];
 
+    // Get the commitment data
+    Commitment memory commitment = commitments[_requestId];
+
     // Verify the requester is valid
     if (requester == address(0)) revert Unauthorized();
 
@@ -248,6 +316,21 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     // Emit the fulfillment event
     emit RandomWordsFulfilled(_requestId, requester, _randomWords);
 
+    // Handle commitment if present
+    if (commitment.manifestHash != bytes32(0)) {
+      // Compute results from random words: (randomWord % rangeSize) + 1
+      uint256[] memory results = new uint256[](_randomWords.length);
+      for (uint256 i; i < _randomWords.length;) {
+        results[i] = (_randomWords[i] % commitment.rangeSize) + 1;
+        unchecked {
+          ++i;
+        }
+      }
+
+      // Emit the commitment fulfillment event
+      emit RandomWordsFulfilledWithCommitment(_requestId, commitment.manifestHash, _randomWords, results);
+    }
+
     // Only make external call if a callback selector was specified
     // Requests made via requestRandomWordsNoCallback have selector = bytes4(0)
     if (selector != bytes4(0)) {
@@ -267,6 +350,13 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   /// @return vrfConfig_ The VRF configuration
   function getVrfConfig() external view returns (VRFConfig memory vrfConfig_) {
     vrfConfig_ = vrfConfig;
+  }
+
+  /// @notice Get the commitment data for a request
+  /// @param _requestId The request ID
+  /// @return commitment_ The commitment data
+  function getCommitment(uint256 _requestId) external view returns (Commitment memory commitment_) {
+    commitment_ = commitments[_requestId];
   }
 
   /// @notice Set the VRF configuration
