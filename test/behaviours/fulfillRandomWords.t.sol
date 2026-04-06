@@ -82,7 +82,7 @@ contract VRFHandlerTest_FulfillRandomWords is VRFHandlerTest {
     vrfHandler.rawFulfillRandomWords(nonExistentRequestId, randomWords);
   }
 
-  /// @notice Test handling receiver reversion when using callback
+  /// @notice Test handling receiver reversion when using callback — fulfillment still succeeds
   function test_fulfillRandomWords_receiverReverts() public {
     uint32 numWords = 1;
 
@@ -95,10 +95,13 @@ contract VRFHandlerTest_FulfillRandomWords is VRFHandlerTest {
     // Prepare random words
     uint256[] memory randomWords = _generateRandomWords(numWords);
 
-    // Attempt to fulfill the request - should revert because the receiver reverts
+    // Fulfillment succeeds — callback failure is absorbed, emits CallbackFailed
     vm.prank(address(coordinator));
-    vm.expectRevert();
     vrfHandler.rawFulfillRandomWords(requestId, randomWords);
+
+    // Request is fulfilled despite callback failure
+    assertTrue(vrfHandler.vrfFulfilledRequests(requestId));
+    assertEq(vrfHandler.activeRequests(), 0);
 
     // Reset the receiver to not revert
     receiver.setShouldRevert(false);

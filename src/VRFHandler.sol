@@ -74,9 +74,6 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   /// @dev Emitted when a parameter provided is invalid
   error InvalidParameter();
 
-  /// @dev Emitted when an external call fails
-  error ExternalCallFailed();
-
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Events
   └─────────────────────────────────────────────────────────────────────────────────────*/
@@ -112,6 +109,9 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   event RandomWordsFulfilledWithCommitment(
     uint256 indexed requestId, bytes32 indexed manifestHash, uint256[] randomWords, uint256[] results
   );
+
+  /// @dev Emitted when a callback to the requester fails — fulfillment still succeeds
+  event CallbackFailed(uint256 indexed requestId, address indexed requester, bytes reason);
 
   /*─────────────────────────────────────────────────────────────────────────────────────
   │ Constructor
@@ -337,8 +337,10 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
       // Prepare the callback data with the selector and parameters
       bytes memory callData = abi.encodeWithSelector(selector, _requestId, _randomWords);
 
-      // Use `_callContract` to make a safer external call with proper error handling
-      _callContract(requester, callData);
+      // Mitigates: callback revert/gas-exhaustion DoS — fulfillment must never revert
+      // due to a misbehaving receiver, so we catch failures and emit instead of bubbling.
+      (bool success, bytes memory reason) = requester.call(callData);
+      if (!success) emit CallbackFailed(_requestId, requester, reason);
     }
   }
 
@@ -375,6 +377,11 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
     external
     onlyOwner
   {
+    // Mitigates: zero-value config bricking all future VRF requests
+    if (_keyHash == bytes32(0)) revert InvalidParameter();
+    if (_subscriptionId == 0) revert InvalidParameter();
+    if (_callbackGasLimit == 0) revert InvalidParameter();
+
     vrfConfig = VRFConfig({
       keyHash: _keyHash,
       subscriptionId: _subscriptionId,
@@ -422,31 +429,5 @@ contract VRFHandler is IVRFHandler, VRFConsumerBaseV2Plus {
   function setNativePaymentEnabled(bool _nativePaymentEnabled) external onlyOwner {
     vrfConfig.nativePaymentEnabled = _nativePaymentEnabled;
     emit NativePaymentEnabledSet(_nativePaymentEnabled);
-  }
-
-  /// @notice Makes a call to `target`, with `data`.
-  /// @dev author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibCall.sol)
-  /// @dev author Modified from ExcessivelySafeCall (https://github.com/nomad-xyz/ExcessivelySafeCall)
-  /// @dev Makes a call to `target`, with `data`.
-  function _callContract(address target, bytes memory data) internal returns (bytes memory result) {
-    /// @solidity memory-safe-assembly
-    assembly {
-      result := mload(0x40)
-      if iszero(call(gas(), target, 0, add(data, 0x20), mload(data), codesize(), 0x00)) {
-        // Bubble up the revert if the call reverts.
-        returndatacopy(result, 0x00, returndatasize())
-        revert(result, returndatasize())
-      }
-      if iszero(returndatasize()) {
-        if iszero(extcodesize(target)) {
-          mstore(0x00, 0x5a836a5f) // `TargetIsNotContract()`.
-          revert(0x1c, 0x04)
-        }
-      }
-      mstore(result, returndatasize()) // Store the length.
-      let o := add(result, 0x20)
-      returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
-      mstore(0x40, add(o, returndatasize())) // Allocate the memory.
-    }
   }
 }
