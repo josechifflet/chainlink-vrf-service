@@ -124,6 +124,13 @@ function myCallback(uint256 requestId, uint256[] calldata randomWords) external 
 | Polygon Mainnet | 137 | `0xec0Ed46f36576541C75739E915ADbCb3DE24bD77` |
 | Polygon Amoy | 80002 | `0x343300b5d84D444B2ADc9116FEF1bED02BE49Cf2` |
 
+## Deployed Contracts
+
+| Network | Chain ID | VRFHandler |
+|---------|----------|------------|
+| Arbitrum Mainnet | 42161 | `0x06ED6BF4f6452b28043FA06bB8b30De2c0942391` |
+| Arbitrum Sepolia | 421614 | `0x4F5D9CdA767fd07d630F10203188E4529c31F2b2` |
+
 ## Build Profiles
 
 | Profile | Use Case | Command |
